@@ -2,7 +2,7 @@ What This Lesson Covers
 ========
 
 - What is Node.js?
-- Comparing Node.js to Ruby, PHP and Python
+- From Ruby, PHP and Python to Node.js
 - How Node Works
 	- Callbacks
 	- The Asynchronous Model
@@ -12,7 +12,7 @@ What This Lesson Covers
 	- Hello World
 	- Opening a file
 	- Creating a web server
-- Addendum on what Powers Node.js
+- For your Curiosity: What Powers Node.js?
 
 What is Node.js?
 --------
@@ -24,7 +24,7 @@ Is it really a programming language? Only in part. It is server-side JavaScript,
 So the way you write Node.js code is just like writing client-side JS, but under the hood is a powerful layer with a lot of high-level OS and network functionality. Get a cursory glance at what Node.js offers on [the Node.js API page](http://api.nodejs.org).
 
 
-Comparing Node.js to Ruby, PHP and Python
+From Ruby, PHP and Python to Node.js
 --------
 
 > _Note: because this topic can be quite controversial, it should be emphasized that we are comparing these languages only for the sake of bridging your previous experience to Node.js._
@@ -204,7 +204,7 @@ http.createServer(function (req, res) {
 console.log("Server running at http://127.0.0.1:1337/");
 ```
 
-Addendum: What Powers Node?
+For your Curiosity: What Powers Node.js?
 -------
 
 Node can be broken down into three core technologies:
