@@ -1,4 +1,4 @@
-What This Lesson Covers
+Workshop 1: Intro to Node.js
 ========
 
 - What is Node.js?
