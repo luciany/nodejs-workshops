@@ -367,13 +367,46 @@ It is important to note that we must spell out the path of the asset we request 
 
 By default express will show a "Cannot GET [route]" if we have not registered that route. But we will likely want our own 404 page that matches the aesthetic of our site.
 
-In `app.js` add this line:
+In `app.js` after all our `app.use` configuration lines add:
 
-[placeholder]
+```javascript
+app.use(function(req, res, next){
+  res.render('404', {});
+});
+```
 
+It is quite important that this be the last middleware configuration because we only want to catch the 404 route after all the other response opportunities have had their chance to respond.
+
+We are rendering the '404' page which means the "404.ejs" template file needs to be created, like this:
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>404</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1>404</h1>
+    <p>Sorry we couldn't find that page!</p>
+  </body>
+</html>
+```
+
+Exercise for the reader is to modify 404.ejs and the 404 middleware to pass on the route the client is trying to access, and display that on the 404 page.
+
+e.g.
+
+"Sorry we couldn't find the page [route]"
 
 #### Authentication
 
 Sometimes you need to protect your application from prying eyes. If that's the case, you can set up simple authentication. In `app.js` add the following code:
 
-[placeholder]
+```javascript
+app.use(express.basicAuth(function(user, pass) {
+    return options.authName == "username" & options.authPass == "password";
+}));
+```
+
+Be sure to put this middleware before any other middleware, so no requests can get past the authentication layer.
