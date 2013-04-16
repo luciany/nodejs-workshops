@@ -5,11 +5,13 @@ Workshop 2: Building a Website in Node.js
 - Creating a more advanced server with express
  - Internals
  - Middleware
-- Adding page routes
- - The `render` method
-- Setting up static assets
-- 404 page
-- Authentication
+- How page routes work
+ - Adding your own
+ - Deeper dive on the `render` method
+- Rounding out our server
+ - Setting up static assets
+ - Custom 404 page
+ - Authentication
 
 What this Workshop Covers
 --------
@@ -185,10 +187,12 @@ http.createServer(app).listen(app.get('port'), function(){
 });
 ```
 
-You can see here when we actually create the server we are retrieving the 'port' configuration from express with `app.get('port')`. That was set earlier with the line `app.set('port', process.env.PORT || 3000);`
+You can see here when we actually create the server we are retrieving the 'port' configuration from express with `app.get('port')`. That was set earlier in the configuration section with this line:
+
+`app.set('port', process.env.PORT || 3000);`
 
 
-Adding Page Routes
+How page routes work
 -------
 
 If our website is going to have multiple pages, we need to add page routes. So when the client accesses:
@@ -196,20 +200,20 @@ If our website is going to have multiple pages, we need to add page routes. So w
 - ourwebsite.com**/products**
 - ourwebsite.com**/support**
 
-then the appropriate page ("products" or "support") is retrieved, rendered and returned to the client.
+...then the appropriate page ("products" or "support") is retrieved, rendered and returned to the client.
 
-Our routing code exists in `routes/index.js`. But where does that file get loaded in? Here again is `app.js`:
+Our routing code exists in `routes/index.js` and is loaded into `app.js` using the `module.exports` method we discussed in [workshop 1](https://github.com/strongloop/nodejs-workshops/blob/master/workshop01.md).
 
 ```javascript
 var express = require('express')
   , routes = require('./routes')
 
-// later we pass our app and some blank options to the function
+// ...some code...
+
+// pass our app and some blank options to the function
 // returned from routes.js --
 routes(app, options);
 ```
-
-Refer to our previous discussion of `module.exports` from workshop 1 if you need a refresher.
 
 Let's dive into `routes/index.js`.
 
@@ -217,7 +221,6 @@ Let's dive into `routes/index.js`.
 /*
  * GET home page.
  */
- 
 function index(req, res){
   res.render('index', { title: 'serverapp' });
 };
@@ -225,17 +228,20 @@ function index(req, res){
 /**
  * Set up routes
  */
- 
 module.exports = function(app, options) {
   app.get('/', index);  
 }
 ```
 
-The important starting point of this file is `app.get('/', index);` down at the bottom.
+The express `app` variable has different methods for the different HTTP verbs: "get", "post", "update", "delete". Towards the end of the file we are registering a route with the "get" method.
 
-Here we are registering a route by saying "When the client asks for our homepage (i.e. "/"), render the `index` page and return it to them."
+```javascript
+app.get('/', index);
+```
 
-The structure of this file can be a bit confusing, though, so let's condense it down a little more. The file can effectively be rewritten like so:
+We are effectively saying "When the client asks for our homepage (i.e. '/'), call the `index` method and render the index page for the client."
+
+Thus the file can effectively be rewritten like so:
 
 ```javascript
 module.exports = function(app, options) {
@@ -245,23 +251,24 @@ module.exports = function(app, options) {
 }
 ```
 
-When the client asks for the homepage, express calls our callback function with the `req` (request) and `res` (response) variables.
+We keep these methods separate so it maintains its extensibility.
 
+#### Adding your own route
 
-#### The `render` method
+Adding another route requires us to do two things:
 
-Express gives us a function called `render` on the `res` variable. The first two arguments of `render` are the name of the template you want to render and any variables you want to pass to the template.
+- Add the route to `routes/index.js`
+- Add a new template file to the `views` folder
 
-`res.render('index', { title: 'serverapp' });`
-
-How does express know where the 'index' template is? In `app.js` when we were configuring express, we told it where to look!
+We saw earlier that when the homepage '/' route was accessed, we called the `index` function which has this code:
 
 ```javascript
-app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
+function index(req, res){
+  res.render('index', { title: 'serverapp' });
+};
 ```
 
-We also told express that our rendering engine of choice is `ejs`. So in our views folder we should see a file `index.ejs` right?
+The first argument to `res.render` is the name of the template file you want to render. When we set up our application config, we told express that our rendering engine is `ejs`. So in our views folder we should see a file `index.ejs`.
 
 Sure enough:
 
@@ -274,3 +281,99 @@ Sure enough:
   app.js
   package.json
 ```
+
+First let's create a new file `views/products.ejs` with the following HTML:
+
+```ejs
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Products</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1>Products</h1>
+    <p>Available products:</p>
+  </body>
+</html>
+```
+
+Now let's add the "products" route to `routes/index.js`:
+
+```javascript
+/*
+ * GET home page.
+ */
+function index(req, res){
+  res.render('index', { title: 'serverapp' });
+};
+
+function products(req, res){
+  res.render('products', { products: 'No products at this time' });
+};
+
+/**
+ * Set up routes
+ */
+module.exports = function(app, options) {
+  app.get('/', index);
+  app.get('/products', products);
+}
+```
+
+We simply added a new method `products` that is called when a visitor accesses the "/products" URL. You can try this out now by accessing your local server at [localhost:3000/products](http://localhost:3000/products) (be sure to restart the app first in your terminal).
+
+#### Deeper dive on the `render` method
+
+Express gives us a function called `render` on the `res` variable. The first two arguments of `render` are the name of the template you want to render and any variables you want to pass to the template.
+
+`res.render('index', { title: 'serverapp' });`
+
+Express knows where the 'index' template is because in  `app.js` when we were configuring express, we told it where to look.
+
+```javascript
+app.set('views', __dirname + '/views');
+app.set('view engine', 'ejs');
+```
+
+There are a number of different engines that express supports. Jade, EJS, etc. You can get more info on your different template options on the [Expressjs website](http://expressjs.com).
+
+Rounding out our web server
+--------
+
+All the other little pieces of code that make your website.
+
+#### Setting up Static Assets
+
+In app.js when we were configuring the application we set up the static middleware like so:
+
+```javascript
+app.use(express.static(path.join(__dirname, 'public')));
+```
+
+This means express will look in the "public" folder of our application directory for any assets we might reference in our template files. For example, in `index.ejs` we reference a stylesheet:
+
+```html
+<link rel='stylesheet' href='/stylesheets/style.css' />
+```
+
+It is important to note that we must spell out the path of the asset we request residing in the public folder. Since our CSS file is in `public/stylesheets/` and we have registered only `public` as a static route, we need to reference href='/stylesheets/style.css'. We could not write it this way:
+
+```html
+<link rel='stylesheet' href='style.css' />
+```
+
+#### Custom 404 Page
+
+By default express will show a "Cannot GET [route]" if we have not registered that route. But we will likely want our own 404 page that matches the aesthetic of our site.
+
+In `app.js` add this line:
+
+[placeholder]
+
+
+#### Authentication
+
+Sometimes you need to protect your application from prying eyes. If that's the case, you can set up simple authentication. In `app.js` add the following code:
+
+[placeholder]
