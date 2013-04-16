@@ -1,11 +1,12 @@
 Workshop 2: Building a Website in Node.js
 ========
 
-- Recap of our basic web server from workshop 1
+- Recap of our basic web server from [workshop 1](https://github.com/strongloop/nodejs-workshops/blob/master/workshop01.md)
 - Creating a more advanced server with express
+ - Internals
+ - Middleware
 - Adding page routes
  - The `render` method
- - Brief foray into `module.exports`
 - Setting up static assets
 - 404 page
 - Authentication
@@ -13,7 +14,7 @@ Workshop 2: Building a Website in Node.js
 What this Workshop Covers
 --------
 
-In the [previous workshop](https://github.com/strongloop/nodejs-workshops/blob/master/workshop01.md) we learned about how Node.js works, installed the [StrongLoop Node distribution](http://strongloop.com/products) and built some starter apps.
+In [workshop 1](https://github.com/strongloop/nodejs-workshops/blob/master/workshop01.md) we learned about how Node.js works, installed the [StrongLoop Node distribution](http://strongloop.com/products) and built some starter apps.
 
 One of those applications was a simple web server based on the core `http` library:
 
@@ -116,27 +117,42 @@ app.configure(function(){
 
 Here we are configuring express. Our configuration options are set with `app.set` &mdash; you can see how this works and the different options on the [express app.configure api page](http://expressjs.com/api.html#app.configure).
 
-`app.use` is the interface for setting up _middleware_, an important concept in the express ecosystem. Middleware "intercepts" incoming requests from your website visitors and does something with those requests.
+`app.use` is the interface for setting up _middleware_, an important concept in the express ecosystem.
 
-For instance, the line `app.use(express.logger('dev'));` uses the logging facility provided by express. Remember the output in your terminal after accessing your server for the first time?
+Express Middleware
+-------
+
+Generally if you use `slnode create` to set up your server then you shouldn't have to touch the middleware. But it's a good idea to know how it works.
+
+The middleware in our application was set in `app.configure` and consists of these functionality:
+
+```
+app.use(express.favicon());
+app.use(express.logger('dev'));
+app.use(express.bodyParser());
+app.use(express.methodOverride());
+app.use(app.router);
+app.use(express.static(path.join(__dirname, 'public')));
+```
+
+Each piece of middleware is passed the incoming request from your website visitors, and then either does something with those requests or passes them on to the next piece of middleware.
+
+#### The logger middleware
+
+For instance, the line `app.use(express.logger('dev'));` uses the logging facility provided by express. Remember the output in your terminal after accessing your server for the first time? This is the logger in action.
 
 ![running the web server](./workshop02/running the server.png)
 
-The output we see here...
+#### Ordering middleware
 
-```bash
-GET / 200 11ms - 212b
-GET /stylesheets/style.css 304 5ms
-```
-
-...that is the logger in action. Middleware can determine whether a request is passed on to the next piece of middleware, so the order of setting up middleware with `app.use` is important. For example, we have in order:
+Since middleware can determine whether a request is passed on to the next piece of middleware or not, the order by which you set up your middleware is paramount. For example, these are our first two pieces of middleware:
 
 ```javascript
 app.use(express.favicon());
 app.use(express.logger('dev'));
 ```
 
-You may have noticed in our logger output we did not see a request for the favicon. But what happens if we reverse the order of the middleware setup?
+You may have noticed in our logger output we did not see a request for the favicon. This is because the favicon middleware stops the request from reaching the next piece of middleware, the logger. But what happens if we reverse the order of the middleware setup?
 
 ```javascript
 app.use(express.logger('dev'));
@@ -153,6 +169,8 @@ GET /favicon.ico 200 3ms
 
 Yep, the `favicon` middleware was stopping requests from going on to the next piece of middleware, so the logger was never seeing the favicon request (generally this is desirable since favicon requests are not particularly interesting). But once we put the logger at the top of the middleware order, we saw the favicon request the browser was making.
 
+Here is the rest of app.js:
+
 ```javascript
 app.configure('development', function(){
   app.use(express.errorHandler());
@@ -167,6 +185,7 @@ http.createServer(app).listen(app.get('port'), function(){
 });
 ```
 
+You can see here when we actually create the server we are retrieving the 'port' configuration from express with `app.get('port')`. That was set earlier with the line `app.set('port', process.env.PORT || 3000);`
 
 
 Adding Page Routes
@@ -179,32 +198,20 @@ If our website is going to have multiple pages, we need to add page routes. So w
 
 then the appropriate page ("products" or "support") is retrieved, rendered and returned to the client.
 
-Remember our application folder structure?
-
-```
-+ node_modules
-+ public
-- routes
-    index.js
-+ views
-  app.js
-  package.json
-```
-
-Yep, our routing code exists inside `index.js` in the `routes` folder. But where does that file get loaded in? Here again is the beginning of the `app.js` file:
+Our routing code exists in `routes/index.js`. But where does that file get loaded in? Here again is `app.js`:
 
 ```javascript
 var express = require('express')
   , routes = require('./routes')
-```
 
-Note: calling `require('./routes')` is the same as `require('./routes/index.js')`. So here in app.js we have loaded in the routes file to the `routes` variable. But `routes` isn't just a variable, is it? Because later on in app.js we run:
-
-```javascript
+// later we pass our app and some blank options to the function
+// returned from routes.js --
 routes(app, options);
 ```
 
-So `routes` is a function that has two argumemnts. OK, let's follow this down the rabbit hole. Let's look at `routes/index.js` and see what code in the file is returning a function to app.js.
+Refer to our previous discussion of `module.exports` from workshop 1 if you need a refresher.
+
+Let's dive into `routes/index.js`.
 
 ```javascript
 /*
@@ -232,11 +239,9 @@ The structure of this file can be a bit confusing, though, so let's condense it 
 
 ```javascript
 module.exports = function(app, options) {
-
-  app.get('/', function(req, res){
+  app.get('/', function(req, res) {
     res.render('index', { title: 'serverapp' });
   };
-
 }
 ```
 
@@ -269,7 +274,3 @@ Sure enough:
   app.js
   package.json
 ```
-
-#### Brief Foray into `module.exports`
-
-Maybe you're thinking 

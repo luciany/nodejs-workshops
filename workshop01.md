@@ -12,6 +12,7 @@ Workshop 1: Intro to Node.js
 	- Hello World
 	- Opening a file
 	- Creating a web server
+- Breaking functionality into multiple files
 - For your Curiosity: What Powers Node.js?
 
 What is Node.js?
@@ -203,6 +204,46 @@ http.createServer(function (req, res) {
 
 console.log("Server running at http://127.0.0.1:1337/");
 ```
+
+Breaking functionality into multiple files
+-------
+
+When your application starts to grow larger and you want to maintain some sanity, you can start breaking your application up into other files.
+
+Node.js has a convention for this called `module.exports`. In one file you set `module.exports` to whatever you want -- a variable, a function, an object, etc.
+
+So let's say you set it like this:
+
+```javascript
+module.exports = function foo() {}
+```
+
+In another file you can load that file using the `require` statement, just like we saw when loading the "http" module with our web server.
+
+```javascript
+var fooReturn = require("bar.js");
+```
+
+Node sees `module.exports` in "bar.js" and returns the "foo" method to your variable `fooReturn`. Let's look at a more comprehensive example:
+
+**bar.js**
+
+```javascript
+module.exports = function foo() {
+	console.log("Hello from bar.js!");
+};
+```
+
+Now let's load "bar.js" in from our main application file.
+
+**app.js**
+
+```javascript
+var bar = require("bar.js");
+bar();
+```
+
+This will print out "Hey!" to our console. You will see `module.exports` used everywhere so understanding how it works is very important. Experiment with it by adding more than one function to `module.exports`. You can get more info on module.exports in [this stackoverflow answer](http://stackoverflow.com/questions/5311334/what-is-the-purpose-of-nodejs-module-exports-and-how-do-you-use-it).
 
 For your Curiosity: What Powers Node.js?
 -------
