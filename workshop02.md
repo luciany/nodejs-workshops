@@ -197,8 +197,8 @@ How page routes work
 
 If our website is going to have multiple pages, we need to add page routes. So when the client accesses:
 
-- ourwebsite.com**/products**
-- ourwebsite.com**/support**
+- ourwebsite.com<b>/products</b>
+- ourwebsite.com<b>/support</b>
 
 ...then the appropriate page ("products" or "support") is retrieved, rendered and returned to the client.
 
