@@ -405,7 +405,7 @@ Sometimes you need to protect your application from prying eyes. If that's the c
 
 ```javascript
 app.use(express.basicAuth(function(user, pass) {
-    return options.authName == "username" & options.authPass == "password";
+    return user == "username" & pass == "password";
 }));
 ```
 
