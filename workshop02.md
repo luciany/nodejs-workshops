@@ -197,8 +197,8 @@ How page routes work
 
 If our website is going to have multiple pages, we need to add page routes. So when the client accesses:
 
-- ourwebsite.com**/products**
-- ourwebsite.com**/support**
+- ourwebsite.com<b>/products</b>
+- ourwebsite.com<b>/support</b>
 
 ...then the appropriate page ("products" or "support") is retrieved, rendered and returned to the client.
 
@@ -405,7 +405,7 @@ Sometimes you need to protect your application from prying eyes. If that's the c
 
 ```javascript
 app.use(express.basicAuth(function(user, pass) {
-    return options.authName == "username" & options.authPass == "password";
+    return user == "username" & pass == "password";
 }));
 ```
 
